@@ -875,7 +875,7 @@ e.printStackTrace();
             JScrollPane pane = petriNetsFrame.GetPetriNetPanelScrollPane();
             Point paneCenter = new Point(pane.getLocation().x+pane.getBounds().width/2, pane.getLocation().y+pane.getBounds().height/2);
             //TODO
-            GraphPetriNet net = generateGraphNetBySimpleNet(panel ,convertMethodToPetriNet(methodText), paneCenter);
+            GraphPetriNet net = generateGraphNetBySimpleNet(panel, convertMethodToPetriNet(methodText), paneCenter);
        //     System.out.println("num of p: "+net.getGraphPetriPlaceList().size());
             panel.addGraphNet(net);
             pnetName = net.getPetriNet().getName();
