@@ -46,7 +46,7 @@ public class PetriSim implements Cloneable, Serializable {
      *
      * @param net Petri net that describes the dynamics of object
      */
-   public PetriSim(PetriNet net) {
+    public PetriSim(PetriNet net) {
         this(net, new StateTime());
     }
    
