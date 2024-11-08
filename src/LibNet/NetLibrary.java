@@ -894,10 +894,11 @@ public static PetriNet CreateNetSimple() throws ExceptionInvalidNetStructure, Ex
 
         return d_Net;
     }
+	
 
 	private static class CourseWork {
 
-		private static void create_model() {
+		public static PetriNet create_model() throws ExceptionInvalidTimeDelay {
 			final var d_P = new ArrayList<PetriP>();
 			final var d_T = new ArrayList<PetriT>();
 			final var d_In = new ArrayList<ArcIn>();
@@ -984,6 +985,14 @@ public static PetriNet CreateNetSimple() throws ExceptionInvalidNetStructure, Ex
 				d_Out.add(new ArcOut(take_up_disks_task_n, busy_disks, 1));
 				d_Out.add(new ArcOut(take_up_disks_task_n, pages, pages_count));
 			});
+
+			PetriNet d_Net = new PetriNet("course_work", d_P, d_T, d_In, d_Out);
+			PetriP.initNext();
+			PetriT.initNext();
+			ArcIn.initNext();
+			ArcOut.initNext();
+
+			return d_Net;
 		}
 
 		private static PetriP create_task_generator(
@@ -1079,5 +1088,9 @@ public static PetriNet CreateNetSimple() throws ExceptionInvalidNetStructure, Ex
 
 			return generated_interrupt;
 		}
+	}
+	
+	public static PetriNet CreateNetcourse_work() throws ExceptionInvalidNetStructure, ExceptionInvalidTimeDelay {
+		return CourseWork.create_model();
 	}
 }
