@@ -1,13 +1,7 @@
 package ua.stetsenkoinna.PetriObj;
+import org.apache.commons.math3.distribution.PoissonDistribution;
 
 import java.util.Random;
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-
 
 /**
  *This class contains methods for generating a random value according to a given distribution
@@ -67,6 +61,12 @@ public  class FunRand {
             throw new ExceptionInvalidTimeDelay("Negative time delay is generatated: Check parameters for time delay.");
         return a;
     }
+
+    public static double poisson(final double timeMean) {
+        PoissonDistribution poisson = new PoissonDistribution(timeMean);
+        return poisson.sample();
+    }
+
     /**
      * Generates random value according to the empiric distribution
      * determined by the sequence of points (xi,yi), 

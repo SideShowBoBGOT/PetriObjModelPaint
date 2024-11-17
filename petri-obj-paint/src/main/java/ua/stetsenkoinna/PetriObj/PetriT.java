@@ -353,9 +353,8 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
      */
     public double getTimeServ() {
         double a = timeServ;
-        if (distribution != null) //додано 6 серпня
-        {
-            a = generateTimeServ();  // додано 6 серпня
+        if (distribution != null) {
+            a = generateTimeServ();
         }
         if (a < 0) {
             JOptionPane.showMessageDialog(null, "Negative time delay was generated : time == " + a + ".\n Transition '" + this.name + "'.");
@@ -395,14 +394,14 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
                 if (distribution.equalsIgnoreCase("exp")) {
                     timeServ = FunRand.exp(parametr);
                 } else if (distribution.equalsIgnoreCase("unif")) {
-                    timeServ = FunRand.unif(parametr - paramDeviation, parametr + paramDeviation);// 18.01.2013
+                    timeServ = FunRand.unif(parametr - paramDeviation, parametr + paramDeviation);
                 } else if (distribution.equalsIgnoreCase("norm")) {
-
-                    timeServ = FunRand.norm(parametr, paramDeviation);// added 18.01.2013
-
-                } else;
+                    timeServ = FunRand.norm(parametr, paramDeviation);
+                } else if (distribution.equalsIgnoreCase("poisson")) {
+                    timeServ = FunRand.poisson(parametr);
+                }
             } else {
-                timeServ = parametr; // 20.11.2012 тобто детерміноване значення
+                timeServ = parametr;
             }
         } catch (ExceptionInvalidTimeDelay ex) {
             Logger.getLogger(PetriT.class.getName()).log(Level.SEVERE, null, ex);
@@ -843,7 +842,7 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
         }
         
         
-    } 
+    }
         
     public void printEventMoments() {
         if (moments) {
