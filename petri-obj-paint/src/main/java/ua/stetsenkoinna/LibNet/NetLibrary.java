@@ -572,7 +572,7 @@ public class NetLibrary {
         final double probability = 1.0 / (double) ((pages_end + 1) - pages_start);
         IntStream.rangeClosed(pages_start, pages_end).forEach((pages_count) -> {
             final String task_n_name = "task_".concat(Integer.toString(pages_count)).concat("_pages");
-            final int priority = pages_end - pages_count;
+            final int priority = (pages_end - pages_count) * 2;
 
             final PetriT generate_task_n = new PetriT("generate_".concat(task_n_name));
             generate_task_n.setProbability(probability);
@@ -585,7 +585,7 @@ public class NetLibrary {
 
             final PetriT try_allocate_task_n = new PetriT("try_allocate_".concat(task_n_name));
             d_T.add(try_allocate_task_n);
-            try_allocate_task_n.setPriority(priority);
+            try_allocate_task_n.setPriority(priority - 1);
             d_In.add(new ArcIn(task_n_pages, try_allocate_task_n));
             d_In.add(new ArcIn(pages, try_allocate_task_n, pages_count));
 
@@ -603,34 +603,36 @@ public class NetLibrary {
             d_P.add(fail_allocate_token_task_n);
             d_Out.add(new ArcOut(fail_allocate_task_n, fail_allocate_token_task_n, 1));
 
-
-
-
+            final PetriT wait_allocate_task_n = new PetriT("wait_allocate_".concat(task_n_name));
+            d_T.add(wait_allocate_task_n);
+            wait_allocate_task_n.setPriority(priority);
+            d_In.add(new ArcIn(fail_allocate_token_task_n, wait_allocate_task_n));
+            d_In.add(new ArcIn(total_wait_allocate_task, wait_allocate_task_n));
+            d_In.add(new ArcIn(pages, wait_allocate_task_n, pages_count));
+            d_Out.add(new ArcOut(wait_allocate_task_n, allocated_task_n, 1));
 
             final PetriT process_task_n = new PetriT("process_".concat(task_n_name), 10.0);
             process_task_n.setDistribution("norm", process_task_n.getTimeServ());
             process_task_n.setParamDeviation(3.0);
             process_task_n.setPriority(priority);
             d_T.add(process_task_n);
-            d_In.add(new ArcIn(task_n_pages, process_task_n));
+            d_In.add(new ArcIn(allocated_task_n, process_task_n));
             d_In.add(new ArcIn(processors, process_task_n));
-            d_In.add(new ArcIn(pages, process_task_n, pages_count));
-
-
-
-
 
             final PetriP processed_task_n = new PetriP("processed_".concat(task_n_name));
             d_P.add(processed_task_n);
             d_Out.add(new ArcOut(process_task_n, processed_task_n, 1));
+
             final PetriT create_io_task_n = new PetriT("create_io_".concat(task_n_name));
             create_io_task_n.setPriority(priority);
             d_T.add(create_io_task_n);
             d_In.add(new ArcIn(processed_task_n, create_io_task_n));
             d_In.add(new ArcIn(generated_io_request, create_io_task_n));
+
             final PetriP io_task_n = new PetriP("io_".concat(task_n_name));
             d_P.add(io_task_n);
             d_Out.add(new ArcOut(create_io_task_n, io_task_n, 1));
+
             final PetriT take_up_disks_task_n = new PetriT("take_up_disks_".concat(task_n_name));
             take_up_disks_task_n.setPriority(priority);
             d_T.add(take_up_disks_task_n);
