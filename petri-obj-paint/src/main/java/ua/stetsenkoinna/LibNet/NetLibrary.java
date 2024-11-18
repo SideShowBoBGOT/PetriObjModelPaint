@@ -543,33 +543,20 @@ public class NetLibrary {
         final PetriP processors = create_processors(d_P);
         final PetriP pages = create_pages(d_P);
         final PetriP free_disks = create_free_disks(d_P);
-        final PetriP busy_disks = create_busy_disks(d_P);
+
         final PetriP total_wait_allocate_task = new PetriP("total_wait_allocate_task");
         d_P.add(total_wait_allocate_task);
-        final PetriP disk_placed = new PetriP("disk_placed");
-        d_P.add(disk_placed);
+
         final PetriP finished_tasks = new PetriP("finished_tasks");
         d_P.add(finished_tasks);
+
         final PetriP is_disk_placement_available = new PetriP("is_disk_placement_available", 1);
         d_P.add(is_disk_placement_available);
-        final PetriT place_disk = new PetriT("place_disk", 0.0375);
-        place_disk.setDistribution("unif", place_disk.getTimeServ());
-        place_disk.setParamDeviation(0.021650635);
-        d_T.add(place_disk);
-        d_In.add(new ArcIn(is_disk_placement_available, place_disk));
-        d_In.add(new ArcIn(busy_disks, place_disk));
-        d_Out.add(new ArcOut(place_disk, disk_placed, 1));
-        final PetriT io_channel_transfer = new PetriT("io_channel_transfer", 0.015);
-        io_channel_transfer.setDistribution("unif", io_channel_transfer.getTimeServ());
-        io_channel_transfer.setParamDeviation(0.007216878);
-        d_T.add(io_channel_transfer);
-        d_In.add(new ArcIn(disk_placed, io_channel_transfer));
-        d_Out.add(new ArcOut(io_channel_transfer, is_disk_placement_available, 1));
-        d_Out.add(new ArcOut(io_channel_transfer, finished_tasks, 1));
-        d_Out.add(new ArcOut(io_channel_transfer, free_disks, 1));
+
         final int pages_start = 20;
         final int pages_end = 21;
         final double probability = 1.0 / (double) ((pages_end + 1) - pages_start);
+
         IntStream.rangeClosed(pages_start, pages_end).forEach((pages_count) -> {
             final String task_n_name = "task_".concat(Integer.toString(pages_count)).concat("_pages");
             final int priority = (pages_end - pages_count) * 2;
@@ -640,8 +627,35 @@ public class NetLibrary {
             d_In.add(new ArcIn(generated_interrupt, take_up_disks_task_n));
             d_In.add(new ArcIn(free_disks, take_up_disks_task_n));
             d_Out.add(new ArcOut(take_up_disks_task_n, processors, 1));
-            d_Out.add(new ArcOut(take_up_disks_task_n, busy_disks, 1));
             d_Out.add(new ArcOut(take_up_disks_task_n, pages, pages_count));
+
+            final PetriP busy_disk_task_n = new PetriP("busy_disk_".concat(task_n_name));
+            d_P.add(busy_disk_task_n);
+            d_Out.add(new ArcOut(take_up_disks_task_n, busy_disk_task_n, 1));
+
+            final PetriT place_disk_task_n = new PetriT("place_disk_".concat(task_n_name), 0.0375);
+            place_disk_task_n.setDistribution("unif", place_disk_task_n.getTimeServ());
+            place_disk_task_n.setParamDeviation(0.021650635);
+            d_T.add(place_disk_task_n);
+            d_In.add(new ArcIn(is_disk_placement_available, place_disk_task_n));
+            d_In.add(new ArcIn(busy_disk_task_n, place_disk_task_n));
+
+            final PetriP disk_placed_task_n = new PetriP("disk_placed_".concat(task_n_name));
+            d_P.add(disk_placed_task_n);
+            d_Out.add(new ArcOut(place_disk_task_n, disk_placed_task_n, 1));
+
+            final PetriT io_channel_transfer_task_n = new PetriT("io_channel_transfer_".concat(task_n_name), 0.015);
+            io_channel_transfer_task_n.setDistribution("unif", io_channel_transfer_task_n.getTimeServ());
+            io_channel_transfer_task_n.setParamDeviation(0.007216878);
+            d_T.add(io_channel_transfer_task_n);
+            d_In.add(new ArcIn(disk_placed_task_n, io_channel_transfer_task_n));
+            d_Out.add(new ArcOut(io_channel_transfer_task_n, is_disk_placement_available, 1));
+            d_Out.add(new ArcOut(io_channel_transfer_task_n, free_disks, 1));
+
+            final PetriP finished_tasks_task_n = new PetriP("finished_tasks_".concat(task_n_name));
+            d_P.add(finished_tasks_task_n);
+            d_Out.add(new ArcOut(io_channel_transfer_task_n, finished_tasks_task_n, 1));
+            d_Out.add(new ArcOut(io_channel_transfer_task_n, finished_tasks, 1));
         });
         PetriNet d_Net = new PetriNet("CourseWork", d_P, d_T, d_In, d_Out);
         PetriP.initNext();
@@ -679,12 +693,6 @@ public class NetLibrary {
 
     private static PetriP create_free_disks(ArrayList<PetriP> d_P) {
         final PetriP disks = new PetriP("free_disks", 4);
-        d_P.add(disks);
-        return disks;
-    }
-
-    private static PetriP create_busy_disks(ArrayList<PetriP> d_P) {
-        final PetriP disks = new PetriP("busy_disks", 0);
         d_P.add(disks);
         return disks;
     }
