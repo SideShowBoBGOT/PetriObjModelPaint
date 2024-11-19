@@ -40,17 +40,17 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>false</filtering>
+                <filtering>true</filtering>
                 <includes>
-                    <include>**/*.png</include>
-                    <include>**/*.PNG</include>
+                    <include>**/*.properties</include>
                 </includes>
             </resource>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+                <filtering>false</filtering>
                 <includes>
-                    <include>**/*.properties</include>
+                    <include>**/*.png</include>
+                    <include>**/*.PNG</include>
                 </includes>
             </resource>
         </resources>
