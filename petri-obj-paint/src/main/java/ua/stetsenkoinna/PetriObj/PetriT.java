@@ -29,9 +29,13 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
 
     private double minTime;
     private double timeServ;
+    private double totalTimeServ;
     private double parametr; //середнє значення часу обслуговування
     private double paramDeviation; //середнє квадратичне відхилення часу обслуговування
     private String distribution;
+
+    public ArrayList<Double> actOutTimePoints = new ArrayList<>();
+
     private ArrayList<Double> timeOut = new ArrayList<>();
     private ArrayList<Integer> inP = new ArrayList<>();
     private ArrayList<Integer> inPwithInf = new ArrayList<>();
@@ -363,6 +367,9 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
 
     }
 
+    public double getTotalTimeServ() {
+        return totalTimeServ;
+    }
     /**
      *
      * @return mean value of service time
@@ -406,6 +413,7 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
         } catch (ExceptionInvalidTimeDelay ex) {
             Logger.getLogger(PetriT.class.getName()).log(Level.SEVERE, null, ex);
         }
+        totalTimeServ += timeServ;
         return timeServ;
     }
 
@@ -613,6 +621,7 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
      */
     public void actOut(PetriP[] pp, double currentTime) {  // parameter current time ia added by Inna 11.07.2018 for protocol events
         if (buffer > 0) {
+            actOutTimePoints.add(currentTime);
             for (int j = 0; j < getOutP().size(); j++) {
                 pp[getOutP().get(j)].increaseMark(quantOut.get(j));
             }
@@ -631,8 +640,8 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
         } else {
             // System.out.println("Buffer is null");
         }
-
     }
+
 
     /**
      * Determines the transition nearest event among the events of its tokens
