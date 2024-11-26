@@ -131,9 +131,9 @@ public class NetLibraryManager {
     }
 
     private static void writeNewMethod(
-            final Path netLibrarySourceFile,
-            final String methodText,
-            final Stream<String> methodNames
+        final Path netLibrarySourceFile,
+        final String methodText,
+        final Stream<String> methodNames
     ) throws Exception {
         final File libNetFile = new File(netLibrarySourceFile.toString());
         final JavaParser javaParser = new JavaParser();

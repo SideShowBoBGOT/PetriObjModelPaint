@@ -35,19 +35,19 @@ public class TestPetriObjSimulation {
         double totalWaitAllocateTime = 0;
         int totalWaitAllocatedTasks = 0;
         for(final NetLibrary.CourseWorkNet.TaskObject taskObject : courseWorkNet.taskObjects) {
-            for(int i = 0; i < taskObject.io_channel_transfer.actOutTimePoints.size(); i++) {
-                final double timeInSystem = taskObject.io_channel_transfer.actOutTimePoints.get(i)
-                        - taskObject.generate.actOutTimePoints.get(i);
+            for(int i = 0; i < taskObject.io_channel_transfer.getOutMoments().size(); i++) {
+                final double timeInSystem = taskObject.io_channel_transfer.getOutMoments().get(i)
+                        - taskObject.generate.getOutMoments().get(i);
                 totalTimeInSystem += timeInSystem;
             }
-            for(int i = 0; i < taskObject.wait_allocate.actOutTimePoints.size(); i++) {
-                final double waitTime = taskObject.wait_allocate.actOutTimePoints.get(i)
-                        - taskObject.fail_allocate.actOutTimePoints.get(i);
+            for(int i = 0; i < taskObject.wait_allocate.getOutMoments().size(); i++) {
+                final double waitTime = taskObject.wait_allocate.getOutMoments().get(i)
+                        - taskObject.fail_allocate.getOutMoments().get(i);
                 totalWaitAllocateTime += waitTime;
             }
-            totalWaitAllocatedTasks += taskObject.wait_allocate.actOutTimePoints.size();
+            totalWaitAllocatedTasks += taskObject.wait_allocate.getOutMoments().size();
             totalPlaceDiskWorkTime += taskObject.place_disk.getTotalTimeServ();
-            totalFinishedTasks += taskObject.io_channel_transfer.actOutTimePoints.size();
+            totalFinishedTasks += taskObject.io_channel_transfer.getOutMoments().size();
             totalIoChannelWorkTime += taskObject.io_channel_transfer.getTotalTimeServ();
             totalProcessorsWorkTime += taskObject.process.getTotalTimeServ();
         }

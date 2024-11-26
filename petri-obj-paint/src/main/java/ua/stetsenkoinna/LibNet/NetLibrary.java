@@ -730,6 +730,9 @@ public class NetLibrary {
                         finish_task_n
                 ));
             });
+            for(final PetriT transition : d_T) {
+                transition.setMoments(true);
+            }
             net = new PetriNet("CourseWork", d_P, d_T, d_In, d_Out);
             PetriP.initNext();
             PetriT.initNext();

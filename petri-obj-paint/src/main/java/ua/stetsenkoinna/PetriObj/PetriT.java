@@ -34,8 +34,6 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
     private double paramDeviation; //середнє квадратичне відхилення часу обслуговування
     private String distribution;
 
-    public ArrayList<Double> actOutTimePoints = new ArrayList<>();
-
     private ArrayList<Double> timeOut = new ArrayList<>();
     private ArrayList<Integer> inP = new ArrayList<>();
     private ArrayList<Integer> inPwithInf = new ArrayList<>();
@@ -621,7 +619,6 @@ public class PetriT extends PetriMainElement implements Cloneable, Serializable 
      */
     public void actOut(PetriP[] pp, double currentTime) {  // parameter current time ia added by Inna 11.07.2018 for protocol events
         if (buffer > 0) {
-            actOutTimePoints.add(currentTime);
             for (int j = 0; j < getOutP().size(); j++) {
                 pp[getOutP().get(j)].increaseMark(quantOut.get(j));
             }
