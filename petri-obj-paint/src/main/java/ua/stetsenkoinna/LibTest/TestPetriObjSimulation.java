@@ -6,84 +6,104 @@ package ua.stetsenkoinna.LibTest;
 
 //import PetriObj.PetriObjModel;
 import ua.stetsenkoinna.LibNet.NetLibrary;
-import ua.stetsenkoinna.PetriObj.*;
+import ua.stetsenkoinna.PetriObj.ExceptionInvalidNetStructure;
+import ua.stetsenkoinna.PetriObj.ExceptionInvalidTimeDelay;
+import ua.stetsenkoinna.PetriObj.PetriObjModel;
+import ua.stetsenkoinna.PetriObj.PetriSim;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import com.github.sh0nk.matplotlib4j.*;
 
 
 /**
  *
  * @author Inna V. Stetsenko
  */
-public class TestPetriObjSimulation {
+public class TestPetriObjSimulation {  //Результати співпадають з аналітичними обрахунками
+    public static void main(String[] args) throws ExceptionInvalidTimeDelay, ExceptionInvalidNetStructure {
 
-    public static void main(String[] args) throws ExceptionInvalidTimeDelay, PythonExecutionException, IOException {
-        final ArrayList<PetriSim> list = new ArrayList<>();
-        final NetLibrary.CourseWorkNet courseWorkNet = new NetLibrary.CourseWorkNet();
-        list.add(new PetriSim(courseWorkNet.net));
-        final PetriObjModel model = new PetriObjModel(list);
+        // цей фрагмент для запуску імітації моделі з заданною мережею Петрі на інтервалі часу timeModeling
+        PetriObjModel model = getModel();
         model.setIsProtokol(false);
-        final double timeModeling = 10000;
+        double timeModeling = 1000000;
         model.go(timeModeling);
-        double totalPlaceDiskWorkTime = 0;
-        double totalIoChannelWorkTime = 0;
-        double totalProcessorsWorkTime = 0;
 
-        ArrayList<Double> timeInSystemList = new ArrayList<>();
-        ArrayList<Double> waitAllocateTimeList = new ArrayList<>();
-
-        for(final NetLibrary.CourseWorkNet.TaskObject taskObject : courseWorkNet.taskObjects) {
-            for(int i = 0; i < taskObject.io_channel_transfer.getOutMoments().size(); i++) {
-                final double timeInSystem = taskObject.io_channel_transfer.getOutMoments().get(i)
-                        - taskObject.generate.getOutMoments().get(i);
-                timeInSystemList.add(timeInSystem);
-            }
-            for(int i = 0; i < taskObject.wait_allocate.getOutMoments().size(); i++) {
-                final double waitTime = taskObject.wait_allocate.getOutMoments().get(i)
-                        - taskObject.fail_allocate.getOutMoments().get(i);
-                waitAllocateTimeList.add(waitTime);
-            }
-            totalPlaceDiskWorkTime += taskObject.place_disk.getTotalTimeServ();
-            totalIoChannelWorkTime += taskObject.io_channel_transfer.getTotalTimeServ();
-            totalProcessorsWorkTime += taskObject.process.getTotalTimeServ();
+        //Цей фрагмент для виведення результатів моделювання на консоль
+        System.out.println("Mean value of queue");
+        for (int j = 1; j < 5; j++) {
+            System.out.println(model.getListObj().get(j).getNet().getListP()[0].getMean());
         }
-        System.out.println("Average time in system: ".concat(Double.toString(calculateAverage(timeInSystemList))));
-        System.out.println("Standard deviation time in system: ".concat(Double.toString(calculateStandardDeviation(timeInSystemList))));
-        System.out.println("Disk load: ".concat(Double.toString(totalPlaceDiskWorkTime / timeModeling)));
-        System.out.println("Io channel load: ".concat(Double.toString(totalIoChannelWorkTime / timeModeling)));
-        System.out.println("Processors load: ".concat(Double.toString(totalProcessorsWorkTime / timeModeling)));
-        System.out.println("Average use of pages: ".concat(
-                Double.toString(NetLibrary.CourseWorkNet.TOTAL_PAGES - courseWorkNet.pages.getMean())));
-        System.out.println("Total wait allocate task: ".concat(Double.toString(courseWorkNet.total_wait_allocate_task.getMean())));
-        System.out.println("Average wait allocate time: ".concat(Double.toString(calculateAverage(waitAllocateTimeList))));
-        System.out.println("Standard deviation wait allocate time: ".concat(Double.toString(calculateStandardDeviation(waitAllocateTimeList))));
+        System.out.println("Mean value of channel worked");
+        for (int j = 1; j < 4; j++) {
+            System.out.println(1.0 - model.getListObj().get(j).getNet().getListP()[1].getMean());
+        }
+        System.out.println(2.0 - model.getListObj().get(4).getNet().getListP()[1].getMean());
 
-        Plot plt = Plot.create();
-        plt.hist().add(timeInSystemList);
-        plt.hist().add(waitAllocateTimeList);
-        plt.hist().add(courseWorkNet.total_wait_allocate_task.getMarks());
-        plt.show();
+        System.out.println("Estimation precision");
+        double[] valuesQueue = {1.786,0.003,0.004,0.00001};
+
+        System.out.println(" Mean value of queue  precision: ");
+        for (int j = 1; j < 5; j++) {
+            double inaccuracy = ( model.getListObj().get(j).getNet().getListP()[0].getMean()-valuesQueue[j-1])/valuesQueue[j-1]*100;
+            inaccuracy = Math.abs(inaccuracy);
+            System.out.println(inaccuracy+" %");
+        }
+
+        double[] valuesChannel = {0.714,0.054,0.062,0.036};
+
+        System.out.println(" Mean value of channel worked  precision: ");
+
+        for (int j = 1; j < 4; j++) {
+            double inaccuracy = ( 1.0 - model.getListObj().get(j).getNet().getListP()[1].getMean()-valuesChannel[j-1])/valuesChannel[j-1]*100;
+            inaccuracy = Math.abs(inaccuracy);
+
+            System.out.println(inaccuracy+" %");
+        }
+        double inaccuracy = ( 2.0 - model.getListObj().get(4).getNet().getListP()[1].getMean()-valuesChannel[3])/valuesChannel[3]*100;
+        inaccuracy = Math.abs(inaccuracy);
+
+        System.out.println(inaccuracy+" %");
+
+
+
+       /*   for(PetriSim e: model.getListObj()){
+              e.printMark();
+
+         }
+         for(PetriSim e: model.getListObj()){
+              e.printBuffer();
+
+         }*/
+
+
     }
 
-    public static <T extends Number> double calculateAverage(ArrayList<T> list) {
-        double sum = 0.0;
-        for (T num : list) {
-            sum += num.doubleValue(); // Cast to Double
-        }
-        return sum / list.size();
+    // метод для конструювання моделі масового обслуговування з 4 СМО
+
+    public static PetriObjModel getModel() throws ExceptionInvalidTimeDelay, ExceptionInvalidNetStructure{
+        ArrayList<PetriSim> list = new ArrayList<>();
+        list.add(new PetriSim(NetLibrary.CreateNetGenerator(2.0)));
+        list.add(new PetriSim(NetLibrary.CreateNetSMOwithoutQueue(1, 0.6,"First")));
+        list.add(new PetriSim(NetLibrary.CreateNetSMOwithoutQueue(1, 0.3, "Second")));
+        list.add(new PetriSim(NetLibrary.CreateNetSMOwithoutQueue(1, 0.4,"Third")));
+        list.add(new PetriSim(NetLibrary.CreateNetSMOwithoutQueue(2, 0.1,"Forth")));
+        list.add(new PetriSim(NetLibrary.CreateNetFork(0.15, 0.13, 0.3)));
+        //перевірка зв'язків
+        //     System.out.println(list.get(0).getNet().getListP()[1].getName() + " == " + list.get(1).getNet().getListP()[0].getName());
+        //     System.out.println(list.get(1).getNet().getListP()[2].getName() + " == " + list.get(5).getNet().getListP()[0].getName());
+
+        list.get(0).getNet().getListP()[1] = list.get(1).getNet().getListP()[0]; //gen = > SMO1
+        list.get(1).getNet().getListP()[2] = list.get(5).getNet().getListP()[0]; //SMO1 = > fork
+
+        list.get(5).getNet().getListP()[1] = list.get(2).getNet().getListP()[0]; //fork =>SMO2
+        list.get(5).getNet().getListP()[2] = list.get(3).getNet().getListP()[0]; //fork =>SMO3
+        list.get(5).getNet().getListP()[3] = list.get(4).getNet().getListP()[0]; //fork =>SMO4
+
+        list.get(2).getNet().getListP()[2] = list.get(1).getNet().getListP()[0]; //SMO2 => SMO1
+        list.get(3).getNet().getListP()[2] = list.get(1).getNet().getListP()[0];//SMO3 => SMO1
+        list.get(4).getNet().getListP()[2] = list.get(1).getNet().getListP()[0];//SMO4 => SMO1
+
+        PetriObjModel model = new PetriObjModel(list);
+        return model;
     }
 
-    public static <T extends Number> double calculateStandardDeviation(ArrayList<T> list) {
-        double mean = calculateAverage(list);
-        double sumSquaredDifferences = 0.0;
-        for (T num : list) {
-            double difference = num.doubleValue() - mean; // Cast to Double
-            sumSquaredDifferences += difference * difference;
-        }
-        double variance = sumSquaredDifferences / list.size();
-        return Math.sqrt(variance);
-    }
 }
