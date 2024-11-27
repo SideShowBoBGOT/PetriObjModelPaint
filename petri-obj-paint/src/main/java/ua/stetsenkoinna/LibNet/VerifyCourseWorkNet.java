@@ -2,18 +2,34 @@ package ua.stetsenkoinna.LibNet;
 
 import com.github.sh0nk.matplotlib4j.PythonExecutionException;
 import ua.stetsenkoinna.PetriObj.ExceptionInvalidTimeDelay;
-import ua.stetsenkoinna.PetriObj.PetriSim;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class VerifyCourseWorkNet {
+
+    static void runModel(
+        final MyPetriSim sim,
+        final double timeModelling,
+        final boolean isStatistics    ) {
+        sim.setSimulationTime(timeModelling);
+        sim.setTimeCurr(0);
+        sim.input();
+        while (sim.getCurrentTime() < sim.getSimulationTime()) {
+            sim.doStatistics();
+            sim.doStatistics();
+            sim.setTimeCurr(sim.getTimeMin());
+            sim.output();
+            sim.input();
+        }
+    }
+
     public static void main(String[] args) throws ExceptionInvalidTimeDelay, PythonExecutionException, IOException {
         final CourseWorkNet courseWorkNet = new CourseWorkNet();
-        final MyPetriModel model = new MyPetriModel(new PetriSim(courseWorkNet.net));
-        model.isProtocolPrint = false;
-        final double timeModeling = 10000;
-        model.go(timeModeling);
+        final MyPetriSim sim = new MyPetriSim(courseWorkNet.net);
+        final double timeModelling = 10000;
+        runModel(sim, timeModelling, true);
+
         double totalPlaceDiskWorkTime = 0;
         double totalIoChannelWorkTime = 0;
         double totalProcessorsWorkTime = 0;
@@ -38,9 +54,9 @@ public class VerifyCourseWorkNet {
         }
         System.out.println("Average time in system: ".concat(Double.toString(calculateAverage(timeInSystemList))));
         System.out.println("Standard deviation time in system: ".concat(Double.toString(calculateStandardDeviation(timeInSystemList))));
-        System.out.println("Disk load: ".concat(Double.toString(totalPlaceDiskWorkTime / timeModeling)));
-        System.out.println("Io channel load: ".concat(Double.toString(totalIoChannelWorkTime / timeModeling)));
-        System.out.println("Processors load: ".concat(Double.toString(totalProcessorsWorkTime / timeModeling)));
+        System.out.println("Disk load: ".concat(Double.toString(totalPlaceDiskWorkTime / timeModelling)));
+        System.out.println("Io channel load: ".concat(Double.toString(totalIoChannelWorkTime / timeModelling)));
+        System.out.println("Processors load: ".concat(Double.toString(totalProcessorsWorkTime / timeModelling)));
         System.out.println("Average use of pages: ".concat(
                 Double.toString(CourseWorkNet.TOTAL_PAGES - courseWorkNet.pages.getMean())));
         System.out.println("Total wait allocate task: ".concat(Double.toString(courseWorkNet.total_wait_allocate_task.getMean())));
