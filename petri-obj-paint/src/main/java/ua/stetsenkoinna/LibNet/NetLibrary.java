@@ -533,7 +533,7 @@ public class NetLibrary {
 
     @NetLibraryMethod
     public static PetriNet create_net() throws ExceptionInvalidTimeDelay {
-        final CourseWorkNet net = new CourseWorkNet(131, 2, 4, 20, 21);
+        final CourseWorkNet net = new CourseWorkNet(131, 2, 4, 20, 21, 5);
         return net.net;
     }
 

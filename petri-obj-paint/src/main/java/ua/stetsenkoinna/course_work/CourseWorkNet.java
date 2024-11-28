@@ -61,14 +61,15 @@ public class CourseWorkNet {
             final int processors_num,
             final int disk_num,
             final int pages_start,
-            final int pages_end
+            final int pages_end,
+            final double tasksTimeMean
     ) throws ExceptionInvalidTimeDelay {
         final ArrayList<PetriP> d_P = new ArrayList<>();
         final ArrayList<PetriT> d_T = new ArrayList<>();
         final ArrayList<ArcIn> d_In = new ArrayList<>();
         final ArrayList<ArcOut> d_Out = new ArrayList<>();
 
-        generated_task = create_task_generator(d_P, d_T, d_In, d_Out);
+        generated_task = create_task_generator(d_P, d_T, d_In, d_Out, tasksTimeMean);
         generated_io_request = create_io_request_generator(d_P, d_T, d_In, d_Out);
         generated_interrupt = create_interrupt_generator(d_P, d_T, d_In, d_Out);
         processors = create_processors(processors_num, d_P);
@@ -216,10 +217,16 @@ public class CourseWorkNet {
         ArcOut.initNext();
     }
 
-    private static PetriP create_task_generator(ArrayList<PetriP> d_P, ArrayList<PetriT> d_T, ArrayList<ArcIn> d_In, ArrayList<ArcOut> d_Out) {
+    private static PetriP create_task_generator(
+            ArrayList<PetriP> d_P,
+            ArrayList<PetriT> d_T,
+            ArrayList<ArcIn> d_In,
+            ArrayList<ArcOut> d_Out,
+            final double tasksTimeMean
+    ) {
         final PetriP task_generator = new PetriP("generator_task", 1);
         d_P.add(task_generator);
-        final PetriT generate_task = new PetriT("generate_task", 5.0);
+        final PetriT generate_task = new PetriT("generate_task", tasksTimeMean);
         generate_task.setDistribution("poisson", generate_task.getTimeServ());
         d_T.add(generate_task);
         d_In.add(new ArcIn(task_generator, generate_task, 1));
@@ -283,13 +290,6 @@ public class CourseWorkNet {
         final PetriP generated_interrupt = new PetriP("generated_interrupt", 0);
         d_P.add(generated_interrupt);
         d_Out.add(new ArcOut(generate_interrupt, generated_interrupt, 1));
-        final PetriT drop_interrupt = new PetriT("drop_interrupt", 0.0);
-        drop_interrupt.setPriority(Integer.MIN_VALUE);
-        d_T.add(drop_interrupt);
-        d_In.add(new ArcIn(generated_interrupt, drop_interrupt));
-        final PetriP drop_counter = new PetriP("drop_counter", 0);
-        d_P.add(drop_counter);
-        d_Out.add(new ArcOut(drop_interrupt, drop_counter, 1));
         return generated_interrupt;
     }
 }
