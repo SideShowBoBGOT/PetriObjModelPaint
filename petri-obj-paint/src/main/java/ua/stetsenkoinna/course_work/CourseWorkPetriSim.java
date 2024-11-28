@@ -2,6 +2,7 @@ package ua.stetsenkoinna.course_work;
 
 import ua.stetsenkoinna.PetriObj.*;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class CourseWorkPetriSim {
     private final StateTime timeState = new StateTime();
@@ -9,7 +10,6 @@ public class CourseWorkPetriSim {
     private final PetriP[] listP;
     private final PetriT[] listT;
     private PetriT eventMin;
-    public ArrayList<Double> timePoints = new ArrayList<>();
 
     public CourseWorkPetriSim(PetriNet net) {
         timeMin = Double.MAX_VALUE;
@@ -20,16 +20,15 @@ public class CourseWorkPetriSim {
 
     public void go(
         final double timeModelling,
-
+        final Consumer<Double> trackStats
     ) {
         setSimulationTime(timeModelling);
         setTimeCurr(0);
         input();
-        timePoints.add(0.0);
         while (getCurrentTime() < getSimulationTime()) {
+            trackStats.accept(getCurrentTime());
             doStatistics();
             setTimeCurr(getTimeMin());
-            timePoints.add(getTimeMin());
             output();
             input();
         }

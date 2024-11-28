@@ -130,13 +130,8 @@ public class PetriP extends PetriMainElement implements Cloneable, Serializable 
      * @param a value for recalculate of mean value (value equals product of
      * marking and time divided by time modeling)
      */
-    private ArrayList<Integer> marks = new ArrayList<>();
     public void changeMean(double a) {
-        marks.add(mark);
         mean = mean + (mark - mean) * a;
-    }
-    public ArrayList<Integer> getMarks() {
-        return marks;
     }
 
     /**

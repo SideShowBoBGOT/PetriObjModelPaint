@@ -7,17 +7,25 @@ import ua.stetsenkoinna.PetriObj.ExceptionInvalidTimeDelay;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 public class DetermineDistributionCourseWork {
 
     public static void main(String[] args) throws ExceptionInvalidTimeDelay, PythonExecutionException, IOException {
-        final int iterations = 20;
-        final double timeModelling = 10000;
+        final int iterations = 3;
         final int pagesNum = 131;
 
-        IntStream.rangeClosed(0, iterations).forEach(iteration -> {
+        final ArrayList<ArrayList<Double>> timePointMat = new ArrayList<>();
+        final ArrayList<ArrayList<Double>> meanTimeInSystemMat = new ArrayList<>();
+        final ArrayList<ArrayList<Double>> meanWaitAllocateTimeMat = new ArrayList<>();
+        final ArrayList<ArrayList<Double>> diskLoadMat = new ArrayList<>();
+        final ArrayList<ArrayList<Double>> ioChannelLoadMat = new ArrayList<>();
+        final ArrayList<ArrayList<Double>> processorsLoadMat = new ArrayList<>();
+        final ArrayList<ArrayList<Double>> meanUseOfPageMat = new ArrayList<>();
+        final ArrayList<ArrayList<Double>> meanTotalWaitAllocateTaskMat = new ArrayList<>();
+
+        IntStream.range(0, iterations).forEach(iteration -> {
             final CourseWorkNet courseWorkNet;
             try {
                 courseWorkNet = new CourseWorkNet(pagesNum, 2, 4, 20, 60);
@@ -25,97 +33,117 @@ public class DetermineDistributionCourseWork {
                 throw new RuntimeException(e);
             }
 
-            AtomicReference<Integer> timeInSystemLastIndex = new AtomicReference<>();
-            final ArrayList<Double> timeInSystemList = new ArrayList<>();
-
-            AtomicReference<Integer> waitAllocateTimeLastIndex = new AtomicReference<>();
-            final ArrayList<Double> waitAllocateTimeList = new ArrayList<>();
-
             final CourseWorkPetriSim sim = new CourseWorkPetriSim(courseWorkNet.net);
 
-            Runnable trackStats = () -> {
-                final AtomicReference<Double> totalPlaceDiskWorkTime = new AtomicReference<>((double) 0);
-                final AtomicReference<Double> totalIoChannelWorkTime = new AtomicReference<>((double) 0);
-                final AtomicReference<Double> totalProcessorsWorkTime = new AtomicReference<>((double) 0);
+            final ArrayList<Double> timePointList = new ArrayList<>();
+            final ArrayList<Double> meanTimeInSystemList = new ArrayList<>();
+            final ArrayList<Double> meanWaitAllocateTimeList = new ArrayList<>();
+            final ArrayList<Double> diskLoadList = new ArrayList<>();
+            final ArrayList<Double> ioChannelLoadList = new ArrayList<>();
+            final ArrayList<Double> processorsLoadList = new ArrayList<>();
+            final ArrayList<Double> meanUseOfPageList = new ArrayList<>();
+            final ArrayList<Double> meanTotalWaitAllocateTaskList = new ArrayList<>();
+
+            final ArrayList<Integer> pagesMarkList = new ArrayList<>();
+            final ArrayList<Integer> totalWaitAllocateMarkList = new ArrayList<>();
+
+            Consumer<Double> trackStats = (currentTimeModelling) -> {
+
+                double totalPlaceDiskWorkTime = 0;
+                double totalIoChannelWorkTime = 0;
+                double totalProcessorsWorkTime = 0;
+                double meanTimeInSystem = 0;
+                double meanWaitAllocate = 0;
+                int numTimeInSystem = 0;
+                int numWaitAllocate = 0;
 
                 for (final CourseWorkNet.TaskObject taskObject : courseWorkNet.taskObjects) {
-                    for (int i = timeInSystemLastIndex.get(); i < taskObject.io_channel_transfer.getOutMoments().size(); i++) {
-                        final double timeInSystem = taskObject.io_channel_transfer.getOutMoments().get(i)
-                                - taskObject.generate.getOutMoments().get(i);
-                        timeInSystemList.add(timeInSystem);
-                    }
-                    timeInSystemLastIndex.updateAndGet(v -> taskObject.io_channel_transfer.getOutMoments().size());
+                    final double taskObjectTimeInSystemSum = calculateAverageDifferenceSum(
+                            taskObject.io_channel_transfer.getOutMoments(),
+                            taskObject.generate.getOutMoments()
+                    );
+                    meanTimeInSystem += taskObjectTimeInSystemSum;
+                    numTimeInSystem += taskObject.io_channel_transfer.getOutMoments().size();
 
-                    for (int i = waitAllocateTimeLastIndex.get(); i < taskObject.wait_allocate.getOutMoments().size(); i++) {
-                        final double waitTime = taskObject.wait_allocate.getOutMoments().get(i)
-                                - taskObject.fail_allocate.getOutMoments().get(i);
-                        waitAllocateTimeList.add(waitTime);
-                    }
-                    waitAllocateTimeLastIndex.updateAndGet(v -> taskObject.wait_allocate.getOutMoments().size());
+                    final double taskObjectWaitAllocateSum = calculateAverageDifferenceSum(
+                            taskObject.wait_allocate.getOutMoments(),
+                            taskObject.fail_allocate.getOutMoments()
+                    );
+                    meanWaitAllocate += taskObjectWaitAllocateSum;
+                    numWaitAllocate += taskObject.wait_allocate.getOutMoments().size();
 
-                    totalPlaceDiskWorkTime.updateAndGet(v -> (v + taskObject.place_disk.getTotalTimeServ()));
-                    totalIoChannelWorkTime.updateAndGet(v -> (v + taskObject.io_channel_transfer.getTotalTimeServ()));
-                    totalProcessorsWorkTime.updateAndGet(v -> (v + taskObject.process.getTotalTimeServ()));
+                    totalPlaceDiskWorkTime += taskObject.place_disk.getTotalTimeServ();
+                    totalIoChannelWorkTime += taskObject.io_channel_transfer.getTotalTimeServ();
+                    totalProcessorsWorkTime += taskObject.process.getTotalTimeServ();
+
                 }
-                final double iterationsTimeModelling = timeModelling * iterations;
-                final double meanTimeInSystem = calculateAverage(timeInSystemList);
-                final double meanWaitAllocateTime = calculateAverage(waitAllocateTimeList);
-                final double diskLoad = totalPlaceDiskWorkTime.get() / iterationsTimeModelling;
-                final double ioChannelLoad = totalIoChannelWorkTime.get() / iterationsTimeModelling;
-                final double processorsLoad = totalProcessorsWorkTime.get() / iterationsTimeModelling;
-                final double meanUseOfPages = pagesNum - (calculateAverage(courseWorkNet.pages.getMarks()));
-                final double meanTotalWaitAllocateTasks = calculateAverage(courseWorkNet.total_wait_allocate_task.getMarks());
+
+                meanTimeInSystem = numTimeInSystem == 0 ? 0 : meanTimeInSystem / numTimeInSystem;
+                meanWaitAllocate /= numWaitAllocate == 0 ? 0 : meanWaitAllocate / numWaitAllocate;
+
+                meanTimeInSystemList.add(meanTimeInSystem);
+                meanWaitAllocateTimeList.add(meanWaitAllocate);
+
+                timePointList.add(currentTimeModelling);
+                diskLoadList.add(totalPlaceDiskWorkTime / currentTimeModelling);
+                ioChannelLoadList.add(totalIoChannelWorkTime / currentTimeModelling);
+                processorsLoadList.add(totalProcessorsWorkTime / currentTimeModelling);
+
+                pagesMarkList.add(courseWorkNet.pages.getMark());
+                totalWaitAllocateMarkList.add(courseWorkNet.total_wait_allocate_task.getMark());
+                meanUseOfPageList.add(pagesNum - (calculateAverage(timePointList, pagesMarkList)));
+                meanTotalWaitAllocateTaskList.add(calculateAverage(timePointList, totalWaitAllocateMarkList));
             };
 
-            sim.go(timeModelling);
+            sim.go(40000, trackStats);
+            timePointMat.add(timePointList);
+            meanTimeInSystemMat.add(meanTimeInSystemList);
+            meanWaitAllocateTimeMat.add(meanWaitAllocateTimeList);
+            diskLoadMat.add(diskLoadList);
+            ioChannelLoadMat.add(ioChannelLoadList);
+            processorsLoadMat.add(processorsLoadList);
+            meanUseOfPageMat.add(meanUseOfPageList);
+            meanTotalWaitAllocateTaskMat.add(meanTotalWaitAllocateTaskList);
         });
 
-
-
-
-
-
-
+        final Plot plt = Plot.create();
+        PlotBuilder plotBuilder = plt.plot();
+        IntStream.range(0, iterations).forEach(iteration -> {
+            plotBuilder.add(timePointMat.get(iteration), meanTimeInSystemMat.get(iteration));
+        });
+        plt.xlabel("Time modelling");
+        plt.ylabel("Mean time in system");
+        plt.show();
     }
 
-    public static <T extends Number> double calculateAverage(final ArrayList<T> list) {
-        return list.stream().map(Number::doubleValue).reduce(Double::sum).get() / list.size();
-    }
-
-    public static <T extends Number> double calculateAverageMat(ArrayList<ArrayList<T>> list) {
-        double sum = 0.0;
-        double size = 0;
-        for (final ArrayList<T> row : list) {
-            for(final Number num : row) {
-                sum += num.doubleValue();
-            }
-            size += row.size();
-        }
-        return sum / size;
-    }
-
-    public static <T extends Number> double calculateStandardDeviation(ArrayList<T> list, final double mean) {
-        double sumSquaredDifferences = 0.0;
-        for (T num : list) {
-            double difference = num.doubleValue() - mean;
-            sumSquaredDifferences += difference * difference;
-        }
-        double variance = sumSquaredDifferences / list.size();
-        return Math.sqrt(variance);
-    }
-
-    public static <T extends Number> double calculateStandardDeviationMat(ArrayList<ArrayList<T>> list, final double mean) {
-        double sumSquaredDifferences = 0.0;
-        double size = 0;
-        for (final ArrayList<T> row : list) {
-            for (final T num : row) {
-                double difference = num.doubleValue() - mean;
-                sumSquaredDifferences += difference * difference;
-            }
-            size += row.size();
+    static <T extends Number> double calculateAverage(
+            final ArrayList<Double> timePointList,
+            final ArrayList<T> values
+    ) {
+        if(timePointList.isEmpty()) {
+            return 0;
         }
 
-        double variance = sumSquaredDifferences / size;
-        return Math.sqrt(variance);
+        double prevTimePoint = 0;
+        double valueSum = 0;
+        for(int i = 0; i < timePointList.size(); i++) {
+            final double delay = timePointList.get(i) - prevTimePoint;
+            prevTimePoint = timePointList.get(i);
+            valueSum += values.get(i).doubleValue() * delay;
+        }
+        return valueSum / timePointList.get(timePointList.size() - 1);
     }
+
+    static <T extends Number> double calculateAverageDifferenceSum(
+        final ArrayList<Double> toMoments,
+        final ArrayList<Double> fromMoments
+    ) {
+        return IntStream.range(0, toMoments.size())
+                .mapToDouble((index) -> {
+                    return toMoments.get(index) - fromMoments.get(index);
+                }).reduce(Double::sum).orElse(0);
+    }
+
+
+
 }
