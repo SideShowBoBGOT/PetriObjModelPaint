@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class DetermineDistributionCourseWork {
+public class TransitivePeriod {
 
     public static void main(String[] args) throws ExceptionInvalidTimeDelay, PythonExecutionException, IOException {
         final int iterations = 4;
@@ -99,7 +99,7 @@ public class DetermineDistributionCourseWork {
                 stdDevTotalWaitAllocateTaskList.add(stdDevTotalWaitAllocateTask);
             };
 
-            sim.go(10000, trackStats);
+            sim.go(30000, trackStats);
 
             timePointMat.add(timePointList);
             diskLoadMat.add(diskLoadList);
@@ -162,6 +162,7 @@ public class DetermineDistributionCourseWork {
         }
         plt.xlabel("Time modelling");
         plt.ylabel(yLabelName);
+        plt.savefig(yLabelName);
         plt.show();
     }
 
