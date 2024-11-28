@@ -1,4 +1,4 @@
-package ua.stetsenkoinna.LibNet;
+package ua.stetsenkoinna.course_work;
 
 import ua.stetsenkoinna.PetriObj.*;
 
@@ -15,8 +15,6 @@ public class CourseWorkNet {
     public final PetriP total_wait_allocate_task;
     public final PetriP finished_tasks;
     public final PetriP is_disk_placement_available;
-
-    public static final int TOTAL_PAGES = 131;
 
     public static class TaskObject {
         public final PetriT generate;
@@ -58,7 +56,13 @@ public class CourseWorkNet {
     public final ArrayList<TaskObject> taskObjects;
     public final PetriNet net;
 
-    public CourseWorkNet() throws ExceptionInvalidTimeDelay {
+    public CourseWorkNet(
+            final int pages_num,
+            final int processors_num,
+            final int disk_num,
+            final int pages_start,
+            final int pages_end
+    ) throws ExceptionInvalidTimeDelay {
         final ArrayList<PetriP> d_P = new ArrayList<>();
         final ArrayList<PetriT> d_T = new ArrayList<>();
         final ArrayList<ArcIn> d_In = new ArrayList<>();
@@ -67,9 +71,9 @@ public class CourseWorkNet {
         generated_task = create_task_generator(d_P, d_T, d_In, d_Out);
         generated_io_request = create_io_request_generator(d_P, d_T, d_In, d_Out);
         generated_interrupt = create_interrupt_generator(d_P, d_T, d_In, d_Out);
-        processors = create_processors(d_P);
-        pages = create_pages(d_P);
-        free_disks = create_free_disks(d_P);
+        processors = create_processors(processors_num, d_P);
+        pages = create_pages(pages_num, d_P);
+        free_disks = create_free_disks(disk_num, d_P);
 
         total_wait_allocate_task = new PetriP("total_wait_allocate_task");
         d_P.add(total_wait_allocate_task);
@@ -80,8 +84,6 @@ public class CourseWorkNet {
         is_disk_placement_available = new PetriP("is_disk_placement_available", 1);
         d_P.add(is_disk_placement_available);
 
-        final int pages_start = 20;
-        final int pages_end = 50;
         final double probability = 1.0 / (double) ((pages_end + 1) - pages_start);
 
         taskObjects = new ArrayList<>();
@@ -187,21 +189,21 @@ public class CourseWorkNet {
             d_Out.add(new ArcOut(io_channel_transfer_task_n, finished_tasks, 1));
 
             taskObjects.add(new TaskObject(
-                    generate_task_n,
-                    task_n_pages,
-                    try_allocate_task_n,
-                    allocated_task_n,
-                    fail_allocate_task_n,
-                    fail_allocate_token_task_n,
-                    wait_allocate_task_n,
-                    process_task_n,
-                    create_io_task_n,
-                    take_up_disks_task_n,
-                    busy_disk_task_n,
-                    place_disk_task_n,
-                    disk_placed_task_n,
-                    io_channel_transfer_task_n,
-                    finish_task_n
+                generate_task_n,
+                task_n_pages,
+                try_allocate_task_n,
+                allocated_task_n,
+                fail_allocate_task_n,
+                fail_allocate_token_task_n,
+                wait_allocate_task_n,
+                process_task_n,
+                create_io_task_n,
+                take_up_disks_task_n,
+                busy_disk_task_n,
+                place_disk_task_n,
+                disk_placed_task_n,
+                io_channel_transfer_task_n,
+                finish_task_n
             ));
         });
         for(final PetriT transition : d_T) {
@@ -228,20 +230,29 @@ public class CourseWorkNet {
         return generated_task;
     }
 
-    private static PetriP create_processors(ArrayList<PetriP> d_P) {
-        final PetriP processors = new PetriP("processors", 2);
+    private static PetriP create_processors(
+            final int num,
+            ArrayList<PetriP> d_P
+    ) {
+        final PetriP processors = new PetriP("processors", num);
         d_P.add(processors);
         return processors;
     }
 
-    private static PetriP create_pages(ArrayList<PetriP> d_P) {
-        final PetriP pages = new PetriP("pages", TOTAL_PAGES);
+    private static PetriP create_pages(
+            final int num,
+            ArrayList<PetriP> d_P
+    ) {
+        final PetriP pages = new PetriP("pages", num);
         d_P.add(pages);
         return pages;
     }
 
-    private static PetriP create_free_disks(ArrayList<PetriP> d_P) {
-        final PetriP disks = new PetriP("free_disks", 4);
+    private static PetriP create_free_disks(
+            final int num,
+            ArrayList<PetriP> d_P
+    ) {
+        final PetriP disks = new PetriP("free_disks", num);
         d_P.add(disks);
         return disks;
     }

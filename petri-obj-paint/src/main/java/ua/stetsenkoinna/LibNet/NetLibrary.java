@@ -10,6 +10,7 @@ import ua.stetsenkoinna.PetriObj.PetriT;
 import java.util.ArrayList;
 import java.util.Random;
 import ua.stetsenkoinna.annotation.NetLibraryMethod;
+import ua.stetsenkoinna.course_work.CourseWorkNet;
 
 public class NetLibrary {
 
@@ -532,7 +533,7 @@ public class NetLibrary {
 
     @NetLibraryMethod
     public static PetriNet create_net() throws ExceptionInvalidTimeDelay {
-        final CourseWorkNet net = new CourseWorkNet();
+        final CourseWorkNet net = new CourseWorkNet(131, 2, 4, 20, 21);
         return net.net;
     }
 

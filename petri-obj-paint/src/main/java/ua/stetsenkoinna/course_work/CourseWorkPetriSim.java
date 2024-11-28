@@ -1,28 +1,41 @@
-package ua.stetsenkoinna.LibNet;
+package ua.stetsenkoinna.course_work;
 
 import ua.stetsenkoinna.PetriObj.*;
 import java.util.*;
 
-public class MyPetriSim {
-    private final StateTime timeState;
-    protected double timeMin;
+public class CourseWorkPetriSim {
+    private final StateTime timeState = new StateTime();
+    private double timeMin;
     private final PetriP[] listP;
     private final PetriT[] listT;
-    protected PetriT eventMin;
+    private PetriT eventMin;
+    public ArrayList<Double> timePoints = new ArrayList<>();
 
-    public MyPetriSim(PetriNet net) {
-        this(net, new StateTime());
-    }
-
-    public MyPetriSim(PetriNet net, StateTime timeState) {
-        this.timeState = timeState;
+    public CourseWorkPetriSim(PetriNet net) {
         timeMin = Double.MAX_VALUE;
         listP = net.getListP();
         listT = net.getListT();
         eventMin = this.getEventMin();
     }
 
-    public void eventMin() {
+    public void go(
+        final double timeModelling,
+
+    ) {
+        setSimulationTime(timeModelling);
+        setTimeCurr(0);
+        input();
+        timePoints.add(0.0);
+        while (getCurrentTime() < getSimulationTime()) {
+            doStatistics();
+            setTimeCurr(getTimeMin());
+            timePoints.add(getTimeMin());
+            output();
+            input();
+        }
+    }
+
+    private void eventMin() {
         PetriT event = null;
         double min = Double.MAX_VALUE;
         for (PetriT transition : listT) {
@@ -35,11 +48,11 @@ public class MyPetriSim {
         eventMin = event;
     }
 
-    public double getTimeMin() {
+    private double getTimeMin() {
         return timeMin;
     }
 
-    public ArrayList<PetriT> findActiveT() {
+    private ArrayList<PetriT> findActiveT() {
         ArrayList<PetriT> aT = new ArrayList<>();
 
         for (PetriT transition : listT) {
@@ -55,36 +68,37 @@ public class MyPetriSim {
         return aT;
     }
 
-    public double getCurrentTime() {
+    private double getCurrentTime() {
         return timeState.getCurrentTime();
     }
 
-    public void setTimeCurr(double aTimeCurr) {
+    private void setTimeCurr(double aTimeCurr) {
         timeState.setCurrentTime(aTimeCurr);
     }
 
-    public double getSimulationTime() {
+    private double getSimulationTime() {
         return timeState.getSimulationTime();
     }
 
-    public void setSimulationTime(double aTimeMod) {
+    private void setSimulationTime(double aTimeMod) {
         timeState.setSimulationTime(aTimeMod);
     }
 
-    public void input() {
+    private void input() {
         ArrayList<PetriT> activeT = this.findActiveT();
         if (activeT.isEmpty() && isBufferEmpty()) {
             timeMin = Double.MAX_VALUE;
         } else {
             while (!activeT.isEmpty()) {
-                this.doConflict(activeT).actIn(listP, this.getCurrentTime());
+                doConflict(activeT).actIn(listP, this.getCurrentTime());
+
                 activeT = this.findActiveT();
             }
             this.eventMin();
         }
     }
 
-    public void output(){
+    private void output() {
         if (this.getCurrentTime() <= this.getSimulationTime()) {
             eventMin.actOut(listP, this.getCurrentTime());
             if (eventMin.getBuffer() > 0) {
@@ -116,8 +130,8 @@ public class MyPetriSim {
             }
         }
     }
-    
-    public void doStatistics() {
+
+    private void doStatistics() {
         for (PetriP position : listP) {
             position.changeMean((timeMin - this.getCurrentTime()) / getSimulationTime());
         }
@@ -126,7 +140,7 @@ public class MyPetriSim {
         }
     }
 
-    public boolean isBufferEmpty() {
+    private boolean isBufferEmpty() {
         boolean c = true;
         for (PetriT e : listT) {
             if (e.getBuffer() > 0) {
@@ -137,12 +151,12 @@ public class MyPetriSim {
         return c;
     }
 
-    public final PetriT getEventMin() {
+    private final PetriT getEventMin() {
         this.eventMin();
         return eventMin;
     }
 
-    public PetriT doConflict(ArrayList<PetriT> transitions) {
+    private static PetriT doConflict(ArrayList<PetriT> transitions) {
         PetriT aT = transitions.get(0);
         if (transitions.size() > 1) {
             aT = transitions.get(0);
@@ -175,5 +189,13 @@ public class MyPetriSim {
             }
         }
         return aT;
+    }
+
+    public void printMark() {
+        System.out.print(" marks: ");
+        for (PetriP position : listP) {
+            System.out.print(position.getMark() + "  ");
+        }
+        System.out.println();
     }
 }
