@@ -184,8 +184,8 @@ public class AnalyzeCourseWorkNet {
             final CourseWorkPetriSim sim = new CourseWorkPetriSim(courseWorkNet.net);
             final Consumer<Double> trackStats = (currentTimeModelling) -> {};
 
-            final int timeModelling = 500000;
-            final int transitivePeriod = 400000;
+            final int timeModelling = 160000;
+            final int transitivePeriod = 60000;
 
             sim.go(timeModelling, trackStats);
 
@@ -212,6 +212,7 @@ public class AnalyzeCourseWorkNet {
                     filteredDiffTimePointsInSystem.stream().map(v -> v.diff),
                     mean
             );
+
             final List<Double> data = filteredDiffTimePointsInSystem.stream()
                     .mapToDouble(v -> v.diff)
                     .boxed()

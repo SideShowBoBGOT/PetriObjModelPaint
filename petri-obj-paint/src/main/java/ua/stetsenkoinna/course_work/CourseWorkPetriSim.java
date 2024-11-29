@@ -140,7 +140,7 @@ public class CourseWorkPetriSim {
         return c;
     }
 
-    private final PetriT getEventMin() {
+    private PetriT getEventMin() {
         this.eventMin();
         return eventMin;
     }
@@ -178,13 +178,5 @@ public class CourseWorkPetriSim {
             }
         }
         return aT;
-    }
-
-    public void printMark() {
-        System.out.print(" marks: ");
-        for (PetriP position : listP) {
-            System.out.print(position.getMark() + "  ");
-        }
-        System.out.println();
     }
 }
