@@ -213,8 +213,6 @@ public class CourseWorkNet {
         net = new PetriNet("CourseWork", d_P, d_T, d_In, d_Out);
         PetriP.initNext();
         PetriT.initNext();
-        ArcIn.initNext();
-        ArcOut.initNext();
     }
 
     private static PetriP create_task_generator(

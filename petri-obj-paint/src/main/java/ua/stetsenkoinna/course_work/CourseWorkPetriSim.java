@@ -27,7 +27,6 @@ public class CourseWorkPetriSim {
         input();
         while (getCurrentTime() < getSimulationTime()) {
             trackStats.accept(getCurrentTime());
-            doStatistics();
             setTimeCurr(getTimeMin());
             output();
             input();
@@ -127,15 +126,6 @@ public class CourseWorkPetriSim {
                     }
                 }
             }
-        }
-    }
-
-    private void doStatistics() {
-        for (PetriP position : listP) {
-            position.changeMean((timeMin - this.getCurrentTime()) / getSimulationTime());
-        }
-        for (PetriT transition : listT) {
-            transition.changeMean((timeMin - this.getCurrentTime()) / getSimulationTime());
         }
     }
 

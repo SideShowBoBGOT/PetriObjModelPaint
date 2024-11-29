@@ -1,6 +1,7 @@
 package ua.stetsenkoinna.course_work;
 
 import com.github.sh0nk.matplotlib4j.Plot;
+import com.github.sh0nk.matplotlib4j.PythonConfig;
 import com.github.sh0nk.matplotlib4j.PythonExecutionException;
 import com.github.sh0nk.matplotlib4j.builder.PlotBuilder;
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
@@ -28,20 +29,16 @@ public class AnalyzeCourseWorkNet {
 //            final List<List<Double>> diskLoadMat = new ArrayList<>();
 //            final List<List<Double>> ioChannelLoadMat = new ArrayList<>();
 //            final List<List<Double>> processorsLoadMat = new ArrayList<>();
-//
 //            final List<List<Double>> meanUseOfPageMat = new ArrayList<>();
 //            final List<List<Double>> stdDevUseOfPageMat = new ArrayList<>();
-//
 //            final List<List<Double>> meanTotalWaitAllocateTaskMat = new ArrayList<>();
 //            final List<List<Double>> stdDevTotalWaitAllocateTaskMat = new ArrayList<>();
-//
-//            final List<List<Double>> meanTimeInSystemMat = new ArrayList<>();
+            final List<List<Double>> meanTimeInSystemMat = new ArrayList<>();
 //            final List<List<Double>> stdDevTimeInSystemMat = new ArrayList<>();
-//            final List<List<Double>> meanTimeInSystemTimePointsMat = new ArrayList<>();
-
-            final List<List<Double>> meanWaitAllocateTimeMat = new ArrayList<>();
-            final List<List<Double>> stdDevWaitAllocateTimeMat = new ArrayList<>();
-            final List<List<Double>> meanWaitAllocateTimeTimePointsMat = new ArrayList<>();
+            final List<List<Double>> meanTimeInSystemTimePointsMat = new ArrayList<>();
+//            final List<List<Double>> meanWaitAllocateTimeMat = new ArrayList<>();
+//            final List<List<Double>> stdDevWaitAllocateTimeMat = new ArrayList<>();
+//            final List<List<Double>> meanWaitAllocateTimeTimePointsMat = new ArrayList<>();
 
             IntStream.range(0, iterations).forEach(iteration -> {
                 final CourseWorkNet courseWorkNet;
@@ -53,7 +50,7 @@ public class AnalyzeCourseWorkNet {
 
                 final CourseWorkPetriSim sim = new CourseWorkPetriSim(courseWorkNet.net);
 
-                final List<Double> timePointList = new ArrayList<>();
+//                final List<Double> timePointList = new ArrayList<>();
 //                final List<Double> diskLoadList = new ArrayList<>();
 //                final List<Double> ioChannelLoadList = new ArrayList<>();
 //                final List<Double> processorsLoadList = new ArrayList<>();
@@ -71,7 +68,7 @@ public class AnalyzeCourseWorkNet {
 //                    timePointList.add(currentTimeModelling);
 //                    pagesMarkList.add(pagesNum - courseWorkNet.pages.getMark());
 //                    totalWaitAllocateMarkList.add(courseWorkNet.total_wait_allocate_task.getMark());
-
+//
 //                    double totalPlaceDiskWorkTime = 0;
 //                    double totalIoChannelWorkTime = 0;
 //                    double totalProcessorsWorkTime = 0;
@@ -81,7 +78,7 @@ public class AnalyzeCourseWorkNet {
 //                        totalIoChannelWorkTime += taskObject.io_channel_transfer.getTotalTimeServ();
 //                        totalProcessorsWorkTime += taskObject.process.getTotalTimeServ();
 //                    }
-
+//
 //                    final double meanUseOfPages = timePointList.size() <= 1 ? 0
 //                            : calculateAverage(timePointList.stream(), pagesMarkList.stream());
 //                    final double stdDevUseOfPages = timePointList.size() <= 1 ? 0
@@ -90,11 +87,11 @@ public class AnalyzeCourseWorkNet {
 //                            : calculateAverage(timePointList.stream(), totalWaitAllocateMarkList.stream());
 //                    final double stdDevTotalWaitAllocateTask = timePointList.size() <= 1 ? 0
 //                            : calculateStdDev(timePointList.stream(), totalWaitAllocateMarkList.stream(), meanTotalWaitAllocateTask);
-
+//
 //                    final double diskLoad = currentTimeModelling < 0.000000001 ? 0 : (totalPlaceDiskWorkTime / currentTimeModelling);
 //                    final double ioChannelLoad = currentTimeModelling < 0.000000001 ? 0 : (totalIoChannelWorkTime / currentTimeModelling);
 //                    final double processorsLoad = currentTimeModelling < 0.000000001 ? 0 : (totalProcessorsWorkTime / currentTimeModelling);
-
+//
 //                    diskLoadList.add(diskLoad);
 //                    ioChannelLoadList.add(ioChannelLoad);
 //                    processorsLoadList.add(processorsLoad);
@@ -105,7 +102,7 @@ public class AnalyzeCourseWorkNet {
 //                    stdDevTotalWaitAllocateTaskList.add(stdDevTotalWaitAllocateTask);
                 };
 
-                sim.go(500000, trackStats);
+                sim.go(60000, trackStats);
 
 //                timePointMat.add(timePointList);
 //                diskLoadMat.add(diskLoadList);
@@ -116,36 +113,36 @@ public class AnalyzeCourseWorkNet {
 //                meanTotalWaitAllocateTaskMat.add(meanTotalWaitAllocateTaskList);
 //                stdDevTotalWaitAllocateTaskMat.add(stdDevTotalWaitAllocateTaskList);
 
-//                final List<DiffTimePoint> diffTimePointsInSystem = new ArrayList<>();
-                final List<DiffTimePoint> diffTimePointsWaitAllocate = new ArrayList<>();
+                final List<DiffTimePoint> diffTimePointsInSystem = new ArrayList<>();
+//                final List<DiffTimePoint> diffTimePointsWaitAllocate = new ArrayList<>();
                 for(final CourseWorkNet.TaskObject taskObject : courseWorkNet.taskObjects) {
-//                    updateDiffTimePointArray(
-//                            taskObject.io_channel_transfer.getOutMoments(),
-//                            taskObject.generate.getOutMoments(),
-//                            diffTimePointsInSystem
-//                    );
                     updateDiffTimePointArray(
-                            taskObject.wait_allocate.getOutMoments(),
-                            taskObject.fail_allocate.getOutMoments(),
-                            diffTimePointsWaitAllocate
+                            taskObject.io_channel_transfer.getOutMoments(),
+                            taskObject.generate.getOutMoments(),
+                            diffTimePointsInSystem
                     );
+//                    updateDiffTimePointArray(
+//                            taskObject.wait_allocate.getOutMoments(),
+//                            taskObject.fail_allocate.getOutMoments(),
+//                            diffTimePointsWaitAllocate
+//                    );
                 }
-//                diffTimePointsInSystem.sort((first, second) -> Double.compare(first.timePoint, second.timePoint));
-                diffTimePointsWaitAllocate.sort((first, second) -> Double.compare(first.timePoint, second.timePoint));
+                diffTimePointsInSystem.sort((first, second) -> Double.compare(first.timePoint, second.timePoint));
+//                diffTimePointsWaitAllocate.sort((first, second) -> Double.compare(first.timePoint, second.timePoint));
 
-//                final List<Double> meanTimeInSystemList = calculateMeansThroughTime(diffTimePointsInSystem);
-//                meanTimeInSystemMat.add(meanTimeInSystemList);
+                final ValuesThroughTime meanTimeInSystemList = calculateMeansThroughTime(diffTimePointsInSystem);
+                meanTimeInSystemMat.add(meanTimeInSystemList.values);
 //                stdDevTimeInSystemMat.add(calculateStdDevsThroughTime(diffTimePointsInSystem, meanTimeInSystemList));
-//                meanTimeInSystemTimePointsMat.add(diffTimePointsInSystem.stream().mapToDouble(v -> v.timePoint).boxed().collect(Collectors.toList()));
+                meanTimeInSystemTimePointsMat.add(meanTimeInSystemList.timePoints);
 
-                final ValuesThroughTime meanWaitAllocateTimeList = calculateMeansThroughTime(diffTimePointsWaitAllocate);
-                meanWaitAllocateTimeMat.add(meanWaitAllocateTimeList.values);
+//                final ValuesThroughTime meanWaitAllocateTimeList = calculateMeansThroughTime(diffTimePointsWaitAllocate);
+//                meanWaitAllocateTimeMat.add(meanWaitAllocateTimeList.values);
 //                stdDevWaitAllocateTimeMat.add(calculateStdDevsThroughTime(diffTimePointsWaitAllocate, meanWaitAllocateTimeList));
-                meanWaitAllocateTimeTimePointsMat.add(meanWaitAllocateTimeList.timePoints);
+//                meanWaitAllocateTimeTimePointsMat.add(meanWaitAllocateTimeList.timePoints);
             });
-//            plot(meanTimeInSystemTimePointsMat, meanTimeInSystemMat, "Mean time in system");
+            plot(meanTimeInSystemTimePointsMat, meanTimeInSystemMat, "Mean time in system");
 //            plot(meanTimeInSystemTimePointsMat, stdDevTimeInSystemMat, "Std dev time in system");
-            plot(meanWaitAllocateTimeTimePointsMat, meanWaitAllocateTimeMat, "Mean wait allocate");
+//            plot(meanWaitAllocateTimeTimePointsMat, meanWaitAllocateTimeMat, "Mean wait allocate");
 //            plot(meanWaitAllocateTimeTimePointsMat, stdDevWaitAllocateTimeMat, "Std dev wait allocate");
 //            plot(timePointMat, diskLoadMat, "Disk load");
 //            plot(timePointMat, ioChannelLoadMat, "Io channel load mat");
@@ -185,7 +182,7 @@ public class AnalyzeCourseWorkNet {
             }
 
             final CourseWorkPetriSim sim = new CourseWorkPetriSim(courseWorkNet.net);
-            Consumer<Double> trackStats = (currentTimeModelling) -> {};
+            final Consumer<Double> trackStats = (currentTimeModelling) -> {};
 
             final int timeModelling = 500000;
             final int transitivePeriod = 400000;
@@ -209,6 +206,7 @@ public class AnalyzeCourseWorkNet {
                     filteredDiffTimePointsInSystem.stream().map(v -> v.timePoint),
                     filteredDiffTimePointsInSystem.stream().map(v -> v.diff)
             );
+
             final double stdDev = calculateStdDev(
                     filteredDiffTimePointsInSystem.stream().map(v -> v.timePoint),
                     filteredDiffTimePointsInSystem.stream().map(v -> v.diff),
@@ -219,85 +217,85 @@ public class AnalyzeCourseWorkNet {
                     .boxed()
                     .collect(Collectors.toList());
 
-            final boolean res = performChiSquaredTest(
-                    data,
-                    mean,
-                    stdDev,
-                    0.05
-            );
-
+//            final boolean res = performChiSquaredTest(
+//                    data,
+//                    mean,
+//                    stdDev,
+//                    0.05
+//            );
 
             final Plot plt = Plot.create();
-            plt.hist().add(data);
-//            plt.savefig("Time in system distribution");
-//            plt.show();
+            plt.hist().log(false).add(data);
+            plt.show();
 
             System.out.println(mean);
             System.out.println(stdDev);
-            System.out.println(res);
+//            System.out.println(res);
         }
 
-        private static int calculateBinsUsingSturges(int dataSize) {
-            if (dataSize <= 0) {
-                throw new IllegalArgumentException("Dataset size must be greater than 0.");
-            }
-            return (int) Math.ceil(log2(dataSize) + 1);
-        }
 
-        private static double log2(double x) {
-            return Math.log(x) / Math.log(2); // Using log base conversion formula
-        }
 
-        public static boolean performChiSquaredTest(
-                final List<Double> data,
-                final double mean,
-                final double stdDev,
-                final double alpha
-        ) {
-            final int numBins = calculateBinsUsingSturges(data.size());
-            // Create a normal distribution with the calculated mean and stdDev
-            NormalDistribution normalDist = new NormalDistribution(mean, stdDev);
-
-            // Determine bin boundaries
-            double min = Collections.min(data);
-            double max = Collections.max(data);
-            double binWidth = (max - min) / numBins;
-
-            // Count observed frequencies
-            int[] observedFrequencies = new int[numBins];
-            for (double value : data) {
-                int binIndex = (int) Math.min((value - min) / binWidth, numBins - 1); // Ensure the last bin is inclusive
-                observedFrequencies[binIndex]++;
-            }
-
-            // Calculate expected frequencies
-            double[] expectedFrequencies = new double[numBins];
-            for (int i = 0; i < numBins; i++) {
-                double binStart = min + i * binWidth;
-                double binEnd = binStart + binWidth;
-                expectedFrequencies[i] = (normalDist.cumulativeProbability(binEnd) - normalDist.cumulativeProbability(binStart)) * data.size();
-            }
-
-            // Calculate Chi-squared statistic
-            double chiSquared = 0.0;
-            for (int i = 0; i < numBins; i++) {
-                if (expectedFrequencies[i] > 0) {
-                    chiSquared += Math.pow(observedFrequencies[i] - expectedFrequencies[i], 2) / expectedFrequencies[i];
-                }
-            }
-
-            // Degrees of freedom = bins - 1 - parameters estimated (mean and variance)
-            int degreesOfFreedom = numBins - 1 - 2;
-
-            // Calculate critical value or p-value
-            org.apache.commons.math3.distribution.ChiSquaredDistribution chiSquaredDist =
-                    new org.apache.commons.math3.distribution.ChiSquaredDistribution(degreesOfFreedom);
-
-            double criticalValue = chiSquaredDist.inverseCumulativeProbability(1 - alpha);
-
-            // Compare Chi-squared statistic with the critical value
-            return chiSquared <= criticalValue;
-        }
+//        private static int calculateBinsUsingSturges(int dataSize) {
+//            if (dataSize <= 0) {
+//                throw new IllegalArgumentException("Dataset size must be greater than 0.");
+//            }
+//            return (int) Math.ceil(log2(dataSize) + 1);
+//        }
+//
+//        private static double log2(double x) {
+//            return Math.log(x) / Math.log(2); // Using log base conversion formula
+//        }
+//
+//        public static boolean performChiSquaredTest(
+//                final List<Double> data,
+//                final double mean,
+//                final double stdDev,
+//                final double alpha
+//        ) {
+//            final int numBins = calculateBinsUsingSturges(data.size());
+//            // Create a normal distribution with the calculated mean and stdDev
+//            NormalDistribution normalDist = new NormalDistribution(mean, stdDev);
+//
+//            // Determine bin boundaries
+//            double min = Collections.min(data);
+//            double max = Collections.max(data);
+//            double binWidth = (max - min) / numBins;
+//
+//            // Count observed frequencies
+//            int[] observedFrequencies = new int[numBins];
+//            for (double value : data) {
+//                int binIndex = (int) Math.min((value - min) / binWidth, numBins - 1); // Ensure the last bin is inclusive
+//                observedFrequencies[binIndex]++;
+//            }
+//
+//            // Calculate expected frequencies
+//            double[] expectedFrequencies = new double[numBins];
+//            for (int i = 0; i < numBins; i++) {
+//                double binStart = min + i * binWidth;
+//                double binEnd = binStart + binWidth;
+//                expectedFrequencies[i] = (normalDist.cumulativeProbability(binEnd) - normalDist.cumulativeProbability(binStart)) * data.size();
+//            }
+//
+//            // Calculate Chi-squared statistic
+//            double chiSquared = 0.0;
+//            for (int i = 0; i < numBins; i++) {
+//                if (expectedFrequencies[i] > 0) {
+//                    chiSquared += Math.pow(observedFrequencies[i] - expectedFrequencies[i], 2) / expectedFrequencies[i];
+//                }
+//            }
+//
+//            // Degrees of freedom = bins - 1 - parameters estimated (mean and variance)
+//            int degreesOfFreedom = numBins - 1 - 2;
+//
+//            // Calculate critical value or p-value
+//            org.apache.commons.math3.distribution.ChiSquaredDistribution chiSquaredDist =
+//                    new org.apache.commons.math3.distribution.ChiSquaredDistribution(degreesOfFreedom);
+//
+//            double criticalValue = chiSquaredDist.inverseCumulativeProbability(1 - alpha);
+//
+//            // Compare Chi-squared statistic with the critical value
+//            return chiSquared <= criticalValue;
+//        }
     }
 
     static <T extends Number> double calculateAverage(

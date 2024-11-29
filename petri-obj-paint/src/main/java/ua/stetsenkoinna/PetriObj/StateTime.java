@@ -13,11 +13,6 @@ public class StateTime {
         simulationTime = Double.MAX_VALUE - 1;
     }
 
-    public StateTime(double currentTime, double modelingTime) {
-        this.currentTime = currentTime;
-        this.simulationTime = modelingTime;
-    }
-
     public double getCurrentTime() {
         return currentTime;
     }
