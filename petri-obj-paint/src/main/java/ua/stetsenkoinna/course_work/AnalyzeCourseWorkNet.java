@@ -3,9 +3,10 @@ package ua.stetsenkoinna.course_work;
 import com.github.sh0nk.matplotlib4j.Plot;
 import com.github.sh0nk.matplotlib4j.PythonExecutionException;
 import com.github.sh0nk.matplotlib4j.builder.PlotBuilder;
-import lombok.Value;
 import ua.stetsenkoinna.PetriObj.ExceptionInvalidTimeDelay;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -156,7 +157,7 @@ public class AnalyzeCourseWorkNet {
 
             IntStream.range(0, iterations).forEach(iteration -> {
                 final PropertyStats propertyStats = collectStats(
-                        3000,
+                        400000,
                         0,
                         131,
                         2,
@@ -165,48 +166,48 @@ public class AnalyzeCourseWorkNet {
                         60,
                         7
                 );
-//                diskLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.diskLoad));
-//                ioChannelLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.ioChannelLoad));
-//                processorsLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.processorsLoad));
+                diskLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.diskLoad));
+                ioChannelLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.ioChannelLoad));
+                processorsLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.processorsLoad));
                 useOfPageMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.useOfPage));
-//                totalWaitAllocateMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.totalWaitAllocate));
-//                meanTimeInSystem.add(calcMeanStdDevThroughTime(propertyStats.timeInSystem));
-//                waitAllocate.add(calcMeanStdDevThroughTime(propertyStats.timeWaitAllocate));
+                totalWaitAllocateMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.totalWaitAllocate));
+                meanTimeInSystem.add(calcMeanStdDevThroughTime(propertyStats.timeInSystem));
+                waitAllocate.add(calcMeanStdDevThroughTime(propertyStats.timeWaitAllocate));
                 propertyStats.timePoint.remove(propertyStats.timePoint.size() - 1);
                 timePointMat.add(propertyStats.timePoint);
-//                {
-//                    final List<Double> timeInSystemTimePoints = propertyStats.timeInSystem.stream()
-//                            .mapToDouble(v -> v.timePoint).boxed().collect(Collectors.toList());
-//                    timeInSystemTimePoints.remove(timeInSystemTimePoints.size() - 1);
-//                    meanTimeInSystemTimePointsMat.add(timeInSystemTimePoints);
-//                }
-//                {
-//                    final List<Double> waitAllocateTimePoints = propertyStats.timeWaitAllocate.stream()
-//                            .mapToDouble(v -> v.timePoint).boxed().collect(Collectors.toList());
-//                    waitAllocateTimePoints.remove(waitAllocateTimePoints.size() - 1);
-//                    waitAllocateTimePointsMat.add(waitAllocateTimePoints);
-//                }
+                {
+                    final List<Double> timeInSystemTimePoints = propertyStats.timeInSystem.stream()
+                            .mapToDouble(v -> v.timePoint).boxed().collect(Collectors.toList());
+                    timeInSystemTimePoints.remove(timeInSystemTimePoints.size() - 1);
+                    meanTimeInSystemTimePointsMat.add(timeInSystemTimePoints);
+                }
+                {
+                    final List<Double> waitAllocateTimePoints = propertyStats.timeWaitAllocate.stream()
+                            .mapToDouble(v -> v.timePoint).boxed().collect(Collectors.toList());
+                    waitAllocateTimePoints.remove(waitAllocateTimePoints.size() - 1);
+                    waitAllocateTimePointsMat.add(waitAllocateTimePoints);
+                }
             });
-//            plotTransitiveMeanPeriod(meanTimeInSystemTimePointsMat, meanTimeInSystem, "MeanTimeInSystem");
-//            plotTransitiveStdDevPeriod(meanTimeInSystemTimePointsMat, meanTimeInSystem, "StdDevTimeInSystem");
-//
-//            plotTransitiveMeanPeriod(waitAllocateTimePointsMat, waitAllocate, "MeanWaitAllocate");
-//            plotTransitiveStdDevPeriod(waitAllocateTimePointsMat, waitAllocate, "StdDevWaitAllocate");
+            plotTransitiveMeanPeriod(meanTimeInSystemTimePointsMat, meanTimeInSystem, "MeanTimeInSystem");
+            plotTransitiveStdDevPeriod(meanTimeInSystemTimePointsMat, meanTimeInSystem, "StdDevTimeInSystem");
 
-//            plotTransitiveMeanPeriod(timePointMat, diskLoadMat, "MeanDiskLoad");
-//            plotTransitiveStdDevPeriod(timePointMat, diskLoadMat, "StdDevDiskLoad");
+            plotTransitiveMeanPeriod(waitAllocateTimePointsMat, waitAllocate, "MeanWaitAllocate");
+            plotTransitiveStdDevPeriod(waitAllocateTimePointsMat, waitAllocate, "StdDevWaitAllocate");
 
-//            plotTransitiveMeanPeriod(timePointMat, ioChannelLoadMat, "MeanIoChannelLoad");
-//            plotTransitiveStdDevPeriod(timePointMat, ioChannelLoadMat, "StdDevIoChannelLoad");
+            plotTransitiveMeanPeriod(timePointMat, diskLoadMat, "MeanDiskLoad");
+            plotTransitiveStdDevPeriod(timePointMat, diskLoadMat, "StdDevDiskLoad");
 
-//            plotTransitiveMeanPeriod(timePointMat, processorsLoadMat, "MeanProcessorsLoad");
-//            plotTransitiveStdDevPeriod(timePointMat, processorsLoadMat, "StdDevProcessorsLoad");
+            plotTransitiveMeanPeriod(timePointMat, ioChannelLoadMat, "MeanIoChannelLoad");
+            plotTransitiveStdDevPeriod(timePointMat, ioChannelLoadMat, "StdDevIoChannelLoad");
+
+            plotTransitiveMeanPeriod(timePointMat, processorsLoadMat, "MeanProcessorsLoad");
+            plotTransitiveStdDevPeriod(timePointMat, processorsLoadMat, "StdDevProcessorsLoad");
 
             plotTransitiveMeanPeriod(timePointMat, useOfPageMat, "MeanUseOfPages");
             plotTransitiveStdDevPeriod(timePointMat, useOfPageMat, "StdDevUseOfPages");
 
-//            plotTransitiveMeanPeriod(timePointMat, totalWaitAllocateMat, "MeanTotalWaitAllocateTasks");
-//            plotTransitiveStdDevPeriod(timePointMat, totalWaitAllocateMat, "StdDevTotalWaitAllocateTasks");
+            plotTransitiveMeanPeriod(timePointMat, totalWaitAllocateMat, "MeanTotalWaitAllocateTasks");
+            plotTransitiveStdDevPeriod(timePointMat, totalWaitAllocateMat, "StdDevTotalWaitAllocateTasks");
         }
         static void plotTransitiveMeanPeriod(
                 final List<List<Double>> timePointMat,
@@ -245,57 +246,66 @@ public class AnalyzeCourseWorkNet {
         }
     }
 
-//    static class DetermineDistribution {
-//        public static void main(String[] args) throws ExceptionInvalidTimeDelay, PythonExecutionException, IOException {
-//
-//            final int pagesNum = 131;
-//            final CourseWorkNet courseWorkNet;
-//            try {
-//                courseWorkNet = new CourseWorkNet(pagesNum, 2, 4, 20, 60, 7);
-//            } catch (ExceptionInvalidTimeDelay e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//            final CourseWorkPetriSim sim = new CourseWorkPetriSim(courseWorkNet.net);
-//            final Consumer<Double> trackStats = (currentTimeModelling) -> {};
-//
-//            final int timeModelling = 500000;
-//            final int transitivePeriod = 400000;
-//
-//            sim.go(timeModelling, trackStats);
-//
-//            final List<DiffTimePoint> diffTimePointsInSystem = new ArrayList<>();
-//            for(final CourseWorkNet.TaskObject taskObject : courseWorkNet.taskObjects) {
-//                updateDiffTimePointArray(
-//                        taskObject.io_channel_transfer.getOutMoments(),
-//                        taskObject.generate.getOutMoments(),
-//                        diffTimePointsInSystem
-//                );
-//            }
-//            final List<DiffTimePoint> filteredDiffTimePointsInSystem = diffTimePointsInSystem.stream()
-//                    .filter(v -> v.timePoint > transitivePeriod)
-//                    .sorted((first, second) -> Double.compare(first.timePoint, second.timePoint))
-//                    .collect(Collectors.toList());
-//
-//            final double mean = calculateAverage(
-//                    filteredDiffTimePointsInSystem.stream().map(v -> v.timePoint),
-//                    filteredDiffTimePointsInSystem.stream().map(v -> v.diff)
-//            );
-//
-//            final double stdDev = calculateStdDev(
-//                    filteredDiffTimePointsInSystem.stream().map(v -> v.timePoint),
-//                    filteredDiffTimePointsInSystem.stream().map(v -> v.diff),
-//                    mean
-//            );
-//
-//            final List<Double> data = filteredDiffTimePointsInSystem.stream()
-//                    .mapToDouble(v -> v.diff)
-//                    .boxed()
-//                    .collect(Collectors.toList());
-//
-//
-//        }
-//    }
+    static class DetermineDistribution {
+        public static void main(String[] args) throws ExceptionInvalidTimeDelay, PythonExecutionException, IOException {
+
+            final PropertyStats propertyStats = collectStats(
+                    500000,
+                    0,
+                    131,
+                    2,
+                    4,
+                    20,
+                    60,
+                    7
+            );
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("commonProps.csv"))) {
+                writer.write("timePoint"
+                        + "," + "diskLoad"
+                        + "," + "ioChannelLoad"
+                        + "," + "processorsLoad"
+                        + "," + "totalWaitAllocate"
+                        + "," + "useOfPage"
+                );
+                writer.newLine();
+                for(int i = 0; i < propertyStats.timePoint.size(); i++) {
+                    writer.write(propertyStats.timePoint.get(i)
+                            + "," + propertyStats.diskLoad.get(i)
+                            + "," + propertyStats.ioChannelLoad.get(i)
+                            + "," + propertyStats.processorsLoad.get(i)
+                            + "," + propertyStats.totalWaitAllocate.get(i)
+                            + "," + propertyStats.useOfPage.get(i)
+                    );
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                System.err.println("Error writing to file: " + e.getMessage());
+            }
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("timeInSystem.csv"))) {
+                writer.write("timePoint,value");
+                writer.newLine();
+                for(final DiffTimePoint diffTimePoint : propertyStats.timeInSystem) {
+                    writer.write(diffTimePoint.timePoint + "," + diffTimePoint.diff);
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                System.err.println("Error writing to file: " + e.getMessage());
+            }
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("waitAllocate.csv"))) {
+                writer.write("timePoint,value");
+                writer.newLine();
+                for(final DiffTimePoint diffTimePoint : propertyStats.timeWaitAllocate) {
+                    writer.write(diffTimePoint.timePoint + "," + diffTimePoint.diff);
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                System.err.println("Error writing to file: " + e.getMessage());
+            }
+        }
+    }
 
     static void updateDiffTimePointArray(
             final double collectStatsStartingAtTimePoint,
