@@ -1,6 +1,5 @@
 package ua.stetsenkoinna.course_work;
 
-import com.github.sh0nk.matplotlib4j.PythonExecutionException;
 import ua.stetsenkoinna.PetriObj.ExceptionInvalidTimeDelay;
 
 import java.io.FileWriter;
