@@ -157,14 +157,14 @@ public class AnalyzeCourseWorkNet {
 
             IntStream.range(0, iterations).forEach(iteration -> {
                 final PropertyStats propertyStats = collectStats(
-                        400000,
+                        1000,
                         0,
                         131,
                         2,
                         4,
                         20,
                         60,
-                        7
+                        6
                 );
                 diskLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.diskLoad));
                 ioChannelLoadMat.add(calcMeanStdDevThroughTime(propertyStats.timePoint, propertyStats.ioChannelLoad));
