@@ -4,179 +4,165 @@ import ua.stetsenkoinna.PetriObj.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+import ua.stetsenkoinna.PetriObj.*;
+import java.util.*;
+import java.util.function.Consumer;
+
 public class CourseWorkPetriSim {
-    private final StateTime timeState = new StateTime();
-    private double timeMin;
-    private final PetriP[] listP;
-    private final PetriT[] listT;
-    private PetriT eventMin;
-
-    public CourseWorkPetriSim(PetriNet net) {
-        timeMin = Double.MAX_VALUE;
-        listP = net.getListP();
-        listT = net.getListT();
-        eventMin = this.getEventMin();
-    }
-
-    public void go(
-        final double timeModelling,
-        final Consumer<Double> trackStats
+    public static void simulatePetriNet(
+            PetriNet net,
+            double timeModelling,
+            Consumer<Double> trackStats
     ) {
-        setSimulationTime(timeModelling);
-        setTimeCurr(0);
-        input();
-        while (getCurrentTime() < getSimulationTime()) {
-            trackStats.accept(getCurrentTime());
-            setTimeCurr(getTimeMin());
-            output();
-            input();
+        PetriP[] listP = net.getListP();
+        PetriT[] listT = net.getListT();
+        double currentTime = 0.0;
+        double timeMin = Double.MAX_VALUE;
+        PetriT eventMin = null;
+
+        timeMin = processInput(listP, listT, currentTime, eventMin);
+        eventMin = findEventMin(listT);
+
+        while (currentTime < timeModelling) {
+            trackStats.accept(currentTime);
+            currentTime = timeMin;
+            timeMin = processOutput(listP, listT, currentTime, timeModelling, eventMin);
+            timeMin = processInput(listP, listT, currentTime, eventMin);
+            eventMin = findEventMin(listT);
         }
     }
 
-    private void eventMin() {
+    private static PetriT findEventMin(PetriT[] listT) {
         PetriT event = null;
         double min = Double.MAX_VALUE;
+
         for (PetriT transition : listT) {
             if (transition.getMinTime() < min) {
                 event = transition;
                 min = transition.getMinTime();
             }
         }
-        timeMin = min;
-        eventMin = event;
+
+        return event;
     }
 
-    private double getTimeMin() {
+    private static ArrayList<PetriT> findActiveTransitions(PetriP[] listP, PetriT[] listT) {
+        ArrayList<PetriT> activeTransitions = new ArrayList<>();
+
+        for (PetriT transition : listT) {
+            if (transition.condition(listP) && transition.getProbability() != 0) {
+                activeTransitions.add(transition);
+            }
+        }
+
+        if (activeTransitions.size() > 1) {
+            activeTransitions.sort((t1, t2) -> Integer.compare(t2.getPriority(), t1.getPriority()));
+        }
+
+        return activeTransitions;
+    }
+
+    private static double processInput(PetriP[] listP, PetriT[] listT, double currentTime, PetriT eventMin) {
+        ArrayList<PetriT> activeTransitions = findActiveTransitions(listP, listT);
+        double timeMin = Double.MAX_VALUE;
+
+        if (activeTransitions.isEmpty() && isBufferEmpty(listT)) {
+            return timeMin;
+        }
+
+        while (!activeTransitions.isEmpty()) {
+            resolveConflict(activeTransitions).actIn(listP, currentTime);
+            activeTransitions = findActiveTransitions(listP, listT);
+        }
+
+        for (PetriT transition : listT) {
+            if (transition.getMinTime() < timeMin) {
+                timeMin = transition.getMinTime();
+            }
+        }
+
         return timeMin;
     }
 
-    private ArrayList<PetriT> findActiveT() {
-        ArrayList<PetriT> aT = new ArrayList<>();
+    private static double processOutput(PetriP[] listP, PetriT[] listT, double currentTime,
+                                        double timeModelling, PetriT eventMin) {
+        if (currentTime <= timeModelling) {
+            eventMin.actOut(listP, currentTime);
+            processBufferedEvents(eventMin, listP, currentTime);
 
-        for (PetriT transition : listT) {
-            if ((transition.condition(listP)) && (transition.getProbability() != 0)) {
-                aT.add(transition);
-
-            }
-        }
-
-        if (aT.size() > 1) {
-            aT.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
-        }
-        return aT;
-    }
-
-    private double getCurrentTime() {
-        return timeState.getCurrentTime();
-    }
-
-    private void setTimeCurr(double aTimeCurr) {
-        timeState.setCurrentTime(aTimeCurr);
-    }
-
-    private double getSimulationTime() {
-        return timeState.getSimulationTime();
-    }
-
-    private void setSimulationTime(double aTimeMod) {
-        timeState.setSimulationTime(aTimeMod);
-    }
-
-    private void input() {
-        ArrayList<PetriT> activeT = this.findActiveT();
-        if (activeT.isEmpty() && isBufferEmpty()) {
-            timeMin = Double.MAX_VALUE;
-        } else {
-            while (!activeT.isEmpty()) {
-                doConflict(activeT).actIn(listP, this.getCurrentTime());
-
-                activeT = this.findActiveT();
-            }
-            this.eventMin();
-        }
-    }
-
-    private void output() {
-        if (this.getCurrentTime() <= this.getSimulationTime()) {
-            eventMin.actOut(listP, this.getCurrentTime());
-            if (eventMin.getBuffer() > 0) {
-                boolean u = true;
-                while (u) {
-                    eventMin.minEvent();
-                    if (eventMin.getMinTime() == this.getCurrentTime()) {
-                        eventMin.actOut(listP,this.getCurrentTime());
-                    } else {
-                        u = false;
-                    }
-                }
-            }
             for (PetriT transition : listT) {
-                if (transition.getBuffer() > 0 && transition.getMinTime() == this.getCurrentTime()) {
-                    transition.actOut(listP, this.getCurrentTime());
-                    if (transition.getBuffer() > 0) {
-                        boolean u = true;
-                        while (u) {
-                            transition.minEvent();
-                            if (transition.getMinTime() == this.getCurrentTime()) {
-                                transition.actOut(listP, this.getCurrentTime());
-                            } else {
-                                u = false;
-                            }
-                        }
-                    }
+                if (transition.getBuffer() > 0 && transition.getMinTime() == currentTime) {
+                    transition.actOut(listP, currentTime);
+                    processBufferedEvents(transition, listP, currentTime);
+                }
+            }
+        }
+
+        double timeMin = Double.MAX_VALUE;
+        for (PetriT transition : listT) {
+            if (transition.getMinTime() < timeMin) {
+                timeMin = transition.getMinTime();
+            }
+        }
+        return timeMin;
+    }
+
+    private static void processBufferedEvents(PetriT transition, PetriP[] listP, double currentTime) {
+        if (transition.getBuffer() > 0) {
+            boolean hasMoreEvents = true;
+            while (hasMoreEvents) {
+                transition.minEvent();
+                if (transition.getMinTime() == currentTime) {
+                    transition.actOut(listP, currentTime);
+                } else {
+                    hasMoreEvents = false;
                 }
             }
         }
     }
 
-    private boolean isBufferEmpty() {
-        boolean c = true;
-        for (PetriT e : listT) {
-            if (e.getBuffer() > 0) {
-                c = false;
-                break;
+    private static boolean isBufferEmpty(PetriT[] listT) {
+        for (PetriT transition : listT) {
+            if (transition.getBuffer() > 0) {
+                return false;
             }
         }
-        return c;
+        return true;
     }
 
-    private PetriT getEventMin() {
-        this.eventMin();
-        return eventMin;
-    }
+    private static PetriT resolveConflict(ArrayList<PetriT> transitions) {
+        if (transitions.size() <= 1) {
+            return transitions.get(0);
+        }
 
-    private static PetriT doConflict(ArrayList<PetriT> transitions) {
-        PetriT aT = transitions.get(0);
-        if (transitions.size() > 1) {
-            aT = transitions.get(0);
-            int i = 0;
-            while (i < transitions.size() && transitions.get(i).getPriority() == aT.getPriority()) {
-                i++;
-            }
-            if (i != 1) {
-                double r = Math.random();
-                int j = 0;
-                double sum = 0;
-                double prob;
-                while (j < transitions.size() && transitions.get(j).getPriority() == aT.getPriority()) {
+        PetriT selectedTransition = transitions.get(0);
+        int i = 0;
+        while (i < transitions.size() &&
+                transitions.get(i).getPriority() == selectedTransition.getPriority()) {
+            i++;
+        }
 
-                    if (transitions.get(j).getProbability() == 1.0) {
-                        prob = 1.0 / i;
-                    } else {
-                        prob = transitions.get(j).getProbability();
-                    }
+        if (i == 1) {
+            return selectedTransition;
+        }
 
-                    sum = sum + prob;
-                    if (r < sum) {
-                        aT = transitions.get(j);
-                        break;
-                    }
-                    else {
-                        j++;
-                    }
-                }
+        double random = Math.random();
+        double sumProbability = 0.0;
+
+        for (int j = 0; j < transitions.size() &&
+                transitions.get(j).getPriority() == selectedTransition.getPriority(); j++) {
+
+            double probability = (transitions.get(j).getProbability() == 1.0)
+                    ? 1.0 / i
+                    : transitions.get(j).getProbability();
+
+            sumProbability += probability;
+
+            if (random < sumProbability) {
+                return transitions.get(j);
             }
         }
-        return aT;
+
+        return selectedTransition;
     }
 }
