@@ -4,10 +4,6 @@ import ua.stetsenkoinna.PetriObj.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-import ua.stetsenkoinna.PetriObj.*;
-import java.util.*;
-import java.util.function.Consumer;
-
 public class CourseWorkPetriSim {
     public static void simulatePetriNet(
             PetriNet net,
@@ -97,7 +93,6 @@ public class CourseWorkPetriSim {
                 }
             }
         }
-
         double timeMin = Double.MAX_VALUE;
         for (PetriT transition : listT) {
             if (transition.getMinTime() < timeMin) {
